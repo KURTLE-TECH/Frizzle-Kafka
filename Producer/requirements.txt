@@ -1,0 +1,17 @@
+boto3==1.17.43
+botocore==1.20.43
+click==7.1.2
+Flask==1.1.2
+Flask-Assets==2.0
+itsdangerous==1.1.0
+Jinja2==2.11.3
+jmespath==0.10.0
+kafka-python==2.0.2
+MarkupSafe==1.1.1
+python-dateutil==2.8.1
+s3transfer==0.3.6
+six==1.15.0
+urllib3==1.26.4
+uWSGI==2.0.19.1
+webassets==2.0
+Werkzeug==1.0.1
