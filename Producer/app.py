@@ -4,9 +4,9 @@ from flask_assets import Bundle, Environment
 from datetime import datetime
 from kafka import KafkaProducer
 from json import dumps, loads
-# producer = KafkaProducer(bootstrap_servers=['13.232.244.184:9092'],
-#                        value_serializer=lambda x:
-#                       dumps(x).encode('utf-8'))
+producer = KafkaProducer(bootstrap_servers=['13.232.244.184:9092'],
+                       value_serializer=lambda x:
+                      dumps(x).encode('utf-8'))
 app = Flask(__name__)
 
 
@@ -24,7 +24,7 @@ def push_to_queue():
         try:
             node_sensor_values = loads(request.data)
             node_sensor_values['time-stamp'] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-            # producer.send('node-3', value=node_sensor_values)
+            producer.send('node-1', value=node_sensor_values)
 			# print(node_sensor_values)
 			# response_body = db_handler.insert(node_sensor_values)
             return {"Status": "Successful","Current":"Just accepting request only"}
