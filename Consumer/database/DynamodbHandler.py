@@ -5,6 +5,7 @@ class DynamodbHandler:
         self.db = boto3.resource('dynamodb')
         self.client = boto3.client('dynamodb')
         self.table = self.db.Table(table_name)
+        self.table_name = table_name
     
     def test(self):
         return "Yes its working"
@@ -21,7 +22,7 @@ class DynamodbHandler:
     def view_database(self):
         try:
             response = self.client.scan(
-                TableName = 'pes_node_2',
+                TableName = self.table_name
             )
             return response
         except Exception as e:

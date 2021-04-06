@@ -16,7 +16,7 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 #client connection and coms
-data = {"Name":"Rishith"}
+data = {"Temp":"23","Pressure":"0.9bar"}
 client.connect(MQTT_server,1883)
 client.publish(MQTT_path,str(data))
 #  client.loop_forever()

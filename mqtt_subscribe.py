@@ -4,7 +4,7 @@ from datetime import datetime
 from json import loads, dumps
 from kafka import KafkaProducer
 producer = KafkaProducer(bootstrap_servers=[
-                         '13.232.244.184:9092'], value_serializer=lambda x: dumps(x).encode('utf-8'))
+                          '13.126.242.56:9092'], value_serializer=lambda x: dumps(x).encode('utf-8'))
 
 
 def on_connect(client, userdata, flags, rc):
@@ -13,14 +13,12 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
-	# node_sensor_values = loads(msg.payload)
-	# node_sensor_values = loads(msgpayload)
-	#node_sensor_values['time-stamp'] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-	#print(node_sensor_values)
-	node_sensor_values = msg.payload.decode('utf-8')
+	node_sensor_values = eval(msg.payload.decode('utf-8'))
+	# print(type(node_sensor_values))
+	if 'time-stamp' not in node_sensor_values.keys():
+		node_sensor_values['time-stamp'] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 	print(node_sensor_values)
 	producer.send('node-1', value=node_sensor_values)
-    #print(msg.topic+" "+str(msg.payload))
 
 
 mqttServer = "65.1.190.134"
