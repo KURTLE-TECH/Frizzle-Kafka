@@ -7,6 +7,7 @@ from kafka import KafkaProducer
 from kafka import KafkaAdminClient
 from kafka.cluster import ClusterMetadata
 from kafka.admin import NewTopic
+from flask.json import jsonify
 import pytz
 import uuid
 # producer = KafkaProducer(bootstrap_servers=['13.232.244.184:9092'],
@@ -43,12 +44,12 @@ def push_to_queue():
 def register_node():
     if request.method=="POST":
         try:
-            node_info = loads(request.data)
+            node_info =loads(request.data)
         except Exception as e:
             # print(e)
-            return dumps(str(e))
-        print(type(node_info))
-        if "id" not in node_info.keys():
+            return jsonify({"parsing error ":str(e)})
+        print(node_info)
+        if node_info["Device ID"] == "":
             data = dict()
             date = datetime.now()
             tz = pytz.timezone('Asia/Kolkata')
@@ -60,7 +61,7 @@ def register_node():
             topics_list = list()
             #topics_list.append(NewTopic(name=data['id'], num_partitions=1, replication_factor=3))
             #client.create_topics(new_topics = topics_list)
-            return dumps(data,indent=4)
+            return jsonify(data)
         else:
             data = dict()
             date = datetime.now()
@@ -69,7 +70,7 @@ def register_node():
             current_time = str(date.astimezone(tz))
             data['date'] = current_time.split()[0]
             data['time'] = current_time.split()[1].rstrip('+5:30')
-            return dumps(data,indent=4)
+            return jsonify(data)
             
 
     else:
@@ -87,3 +88,4 @@ def show_topics():
 
 if __name__ == "__main__":
     app.run(debug=True,port=5000)
+
