@@ -20,7 +20,7 @@ consumer = KafkaConsumer('node-1',bootstrap_servers=["13.126.242.56:9092"],
 	)
 db_handler = db.DynamodbHandler("pes_node_1")
 database_view=db_handler.view_database()
-print(database_view)
+#print(database_view)
 for message in consumer:
 	print(message.value)
 	send_reading(message.value)

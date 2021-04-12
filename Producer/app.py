@@ -1,3 +1,4 @@
+import boto3
 from flask import Flask, render_template, request
 from flask_assets import Bundle, Environment
 from datetime import datetime
@@ -10,7 +11,7 @@ from flask.json import jsonify
 from create_table import *
 import pytz
 import uuid
-producer = KafkaProducer(bootstrap_servers=['13.232.244.184:9092'],
+producer = KafkaProducer(bootstrap_servers=['13.126.242.56:9092'],
                        value_serializer=lambda x:
                       dumps(x).encode('utf-8'))
 
@@ -50,10 +51,12 @@ def register_node():
             try:
             	client.create_topics(new_topics = topics_list)
             except Exception as e:
+	    	data['error'] = e
             	return jsonify(data)
 
             status = create_table_in_database(topic_name)
             if status=="failed":
+            	data['error'] = 'dynamo failed'
                 return jsonify(data)
 
             data['id'] = topic_name
