@@ -15,7 +15,7 @@ producer = KafkaProducer(bootstrap_servers=['13.126.242.56:9092'],
                          value_serializer=lambda x:
                          dumps(x).encode('utf-8'))
 
-client = KafkaAdminClient(bootstrap_servers=['13.126.242.56:9092'])
+client1 = KafkaAdminClient(bootstrap_servers=['13.126.242.56:9092'])
 client = boto3.client('dynamodb')
 app = Flask(__name__)
 
@@ -56,7 +56,7 @@ def register_node():
                 return jsonify(data)
 
             # creating the table for the node
-            status = create_table_in_database(topic_name)
+            status = create_table_in_database(client,topic_name)
             if status == "failed":
                 data['error'] = 'dynamo failed'
                 return jsonify(data)
