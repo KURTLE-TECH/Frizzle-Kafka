@@ -9,7 +9,7 @@ producer = KafkaProducer(bootstrap_servers=[
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code" + str(rc))
-    client.subscribe("testing_topic")
+    client.subscribe("Frizzle/Sensor_Data")
 
 
 def on_message(client, userdata, msg):
@@ -21,7 +21,7 @@ def on_message(client, userdata, msg):
 	producer.send('node-1', value=node_sensor_values)
 
 
-mqttServer = "65.1.190.134"
+mqttServer = "13.126.242.56"
 
 client = mqtt.Client("rishi_bhowmi_receiver")
 client.on_connect = on_connect

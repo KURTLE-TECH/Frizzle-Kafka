@@ -13,7 +13,7 @@ import uuid
 # producer = KafkaProducer(bootstrap_servers=['13.232.244.184:9092'],
 #                        value_serializer=lambda x:
 #                       dumps(x).encode('utf-8'))
-#client = KafkaAdminClient(bootstrap_servers=['13.126.242.56:9092'])
+client = KafkaAdminClient(bootstrap_servers=['13.126.242.56:9092'])
 app = Flask(__name__)
 
 
@@ -56,11 +56,16 @@ def register_node():
             current_time = str(date.astimezone(tz))
             data['date'] = current_time.split()[0]
             data['time'] = current_time.split()[1].rstrip('+5:30')
-            data['id'] = str(uuid.uuid4())
+            topic_name = str(uuid.uuid4())
             
             topics_list = list()
-            #topics_list.append(NewTopic(name=data['id'], num_partitions=1, replication_factor=3))
-            #client.create_topics(new_topics = topics_list)
+            topics_list.append(NewTopic(name=topic_name, num_partitions=1, replication_factor=3))
+            
+            try:
+            	client.create_topics(new_topics = topics_list)
+            except Exception as e:
+            	return jsonify(data)
+            data['id'] = topic_name
             return jsonify(data)
         else:
             data = dict()
