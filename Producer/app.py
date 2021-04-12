@@ -8,7 +8,6 @@ from kafka import KafkaAdminClient
 from kafka.cluster import ClusterMetadata
 from kafka.admin import NewTopic
 from flask.json import jsonify
-from create_table import *
 import pytz
 import uuid
 producer = KafkaProducer(bootstrap_servers=['13.126.242.56:9092'],
@@ -18,7 +17,35 @@ producer = KafkaProducer(bootstrap_servers=['13.126.242.56:9092'],
 client1 = KafkaAdminClient(bootstrap_servers=['13.126.242.56:9092'])
 client = boto3.client('dynamodb')
 app = Flask(__name__)
-
+def create_table_in_database(client,topic_name):
+    try:
+        response = client.create_table(
+            AttributeDefinitions=[
+            {
+            'AttributeName': 'time-stamp',
+            'AttributeType': 'S'
+            },
+            ],
+        TableName=topic_name,
+        KeySchema=[
+            {
+                'AttributeName': 'time-stamp',
+                'KeyType': 'HASH'
+            },
+        ],
+        BillingMode='PAY_PER_REQUEST',
+        StreamSpecification={
+            'StreamEnabled': False,
+        },
+        SSESpecification={
+            'Enabled': True ,
+            'SSEType': 'KMS',
+            'KMSMasterKeyId': '57780289-75ee-4f41-bdf8-0d4f43291fae'
+        }
+        )
+        print(response)
+    except Exception as e:
+        print(e)
 
 @app.route('/')
 def hello_world():
@@ -29,8 +56,7 @@ def hello_world():
 
 
 @app.route("/register_node", methods=["POST"])
-def register_node():
-    if request.method == "POST":
+def register_node():   if request.method == "POST":
         try:
             node_info = loads(request.data)
         except Exception as e:
@@ -48,9 +74,9 @@ def register_node():
             # creating topics for the node
             topics_list = list()
             topics_list.append(
-                NewTopic(name=topic_name, num_partitions=1, replication_factor=3))
+                NewTopic(name=topic_name, num_partitions=1, replication_factor=1))
             try:
-                client.create_topics(new_topics=topics_list)
+                client1.create_topics(new_topics=topics_list)
             except Exception as e:
                 data['error'] = e
                 return jsonify(data)
