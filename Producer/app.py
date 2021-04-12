@@ -12,8 +12,8 @@ from create_table import *
 import pytz
 import uuid
 producer = KafkaProducer(bootstrap_servers=['13.126.242.56:9092'],
-                       value_serializer=lambda x:
-                      dumps(x).encode('utf-8'))
+                         value_serializer=lambda x:
+                         dumps(x).encode('utf-8'))
 
 client = KafkaAdminClient(bootstrap_servers=['13.126.242.56:9092'])
 client = boto3.client('dynamodb')
@@ -28,13 +28,13 @@ def hello_world():
         return "Root method uses only GET, Please try again"
 
 
-@app.route("/register_node",methods=["POST"])
+@app.route("/register_node", methods=["POST"])
 def register_node():
-    if request.method=="POST":
+    if request.method == "POST":
         try:
-            node_info =loads(request.data)
+            node_info = loads(request.data)
         except Exception as e:
-            return jsonify({"parsing error ":str(e)})
+            return jsonify({"parsing error ": str(e)})
         print(node_info)
         if node_info["Device ID"] == "":
             data = dict()
@@ -44,19 +44,21 @@ def register_node():
             data['date'] = current_time.split()[0]
             data['time'] = current_time.split()[1].rstrip('+5:30')
             topic_name = str(uuid.uuid4())
-            #creating topics for
+
+            # creating topics for the node
             topics_list = list()
-            topics_list.append(NewTopic(name=topic_name, num_partitions=1, replication_factor=3))
-
+            topics_list.append(
+                NewTopic(name=topic_name, num_partitions=1, replication_factor=3))
             try:
-            	client.create_topics(new_topics = topics_list)
+                client.create_topics(new_topics=topics_list)
             except Exception as e:
-	    	data['error'] = e
-            	return jsonify(data)
+                data['error'] = e
+                return jsonify(data)
 
+            # creating the table for the node
             status = create_table_in_database(topic_name)
-            if status=="failed":
-            	data['error'] = 'dynamo failed'
+            if status == "failed":
+                data['error'] = 'dynamo failed'
                 return jsonify(data)
 
             data['id'] = topic_name
@@ -71,11 +73,11 @@ def register_node():
             data['time'] = current_time.split()[1].rstrip('+5:30')
             return jsonify(data)
 
-
     else:
-        return {"Status":"Failed","Reason":"Wrong method, POST method only"}
+        return {"Status": "Failed", "Reason": "Wrong method, POST method only"}
 
-@app.route("/show_topics",methods=["GET"])
+
+@app.route("/show_topics", methods=["GET"])
 def show_topics():
     try:
         return "working"
@@ -84,4 +86,4 @@ def show_topics():
 
 
 if __name__ == "__main__":
-    app.run(debug=True,port=5000)
+    app.run(debug=True, port=5000)
