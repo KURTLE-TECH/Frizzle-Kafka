@@ -56,7 +56,8 @@ def hello_world():
 
 
 @app.route("/register_node", methods=["POST"])
-def register_node():   if request.method == "POST":
+def register_node():
+    if request.method == "POST":
         try:
             node_info = loads(request.data)
         except Exception as e:
@@ -69,14 +70,16 @@ def register_node():   if request.method == "POST":
             current_time = str(date.astimezone(tz))
             data['date'] = current_time.split()[0]
             data['time'] = current_time.split()[1].rstrip('+5:30')
+            print(date)
             topic_name = str(uuid.uuid4())
-
+            print(topic_name)
             # creating topics for the node
             topics_list = list()
             topics_list.append(
                 NewTopic(name=topic_name, num_partitions=1, replication_factor=1))
             try:
                 client1.create_topics(new_topics=topics_list)
+                print("inside topic creation")
             except Exception as e:
                 data['error'] = e
                 return jsonify(data)

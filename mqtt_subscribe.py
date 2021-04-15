@@ -9,16 +9,17 @@ producer = KafkaProducer(bootstrap_servers=[
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code" + str(rc))
+
     client.subscribe("Frizzle/Sensor_Data")
 
 
 def on_message(client, userdata, msg):
 	node_sensor_values = eval(msg.payload.decode('utf-8'))
-	# print(type(node_sensor_values))
+	print(node_sensor_values)
 	if 'time-stamp' not in node_sensor_values.keys():
 		node_sensor_values['time-stamp'] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-	print(node_sensor_values)
-	producer.send('node-1', value=node_sensor_values)
+	print(node_sensor_values['Device ID'])
+	producer.send(node_sensor_values['Device ID'], value=node_sensor_values)
 
 
 mqttServer = "13.126.242.56"
@@ -29,4 +30,4 @@ client.on_message = on_message
 
 client.username_pw_set("frizzle_test", "FRIZZLE")
 client.connect(mqttServer, 1883, 60)
-client.loop_forever()	
+client.loop_forever()
