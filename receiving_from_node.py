@@ -26,7 +26,7 @@ def on_message(client, userdata, msg):
 	#print(node_sensor_values['Device ID'])
 	#producer.produce(node_sensor_values['Device ID'],key=node_sensor_values['Device ID'], value=dumps(node_sensor_values))
 	try:
-                redis_cluster_endpoint.set(node_sensor_values['Device ID'],node_sensor_values)
+        redis_cluster_endpoint.set(node_sensor_values['Device ID'],node_sensor_values)
 
     except Exception as e:
         print('Redis error: ',e)
