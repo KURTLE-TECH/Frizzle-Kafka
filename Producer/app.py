@@ -45,7 +45,7 @@ def create_table_in_database(client,topic_name):
             'KMSMasterKeyId': '57780289-75ee-4f41-bdf8-0d4f43291fae'
         }
         )
-        print(response)
+        return response
     except Exception as e:
         print(e)
 
@@ -92,8 +92,8 @@ def register_node():
                 data['error'] = 'dynamo failed'
                 return jsonify(data)
 
-	    #add table to existing pool of device
-	    try:
+	        #add table to existing pool of device
+            try:
             	row = {"Device ID":topic_name,"lat":"","lng":""}
             	with nodes_table.batch_writer() as writer:
                 	writer.put_item(Item=row)
@@ -112,7 +112,7 @@ def register_node():
             data['date'] = current_time.split()[0]
             data['time'] = current_time.split()[1].rstrip('+5:30')
             try:
-            	row = {"Device ID":nodes_info["Device ID"],"lat":nodes_info["lat"],"lng":nodes_info["lng"]}
+            	row = {"Device ID":node_info["Device ID"],"lat":node_info["lat"],"lng":node_info["lng"]}
             	with nodes_table.batch_writer() as writer:
                 	writer.put_item(Item=row)
             except Exception as e:
@@ -122,14 +122,6 @@ def register_node():
 
     else:
         return {"Status": "Failed", "Reason": "Wrong method, POST method only"}
-
-
-@app.route("/show_topics", methods=["GET"])
-def show_topics():
-    try:
-        return "working"
-    except Exception as e:
-        return dumps(str(e))
 
 
 if __name__ == "__main__":
