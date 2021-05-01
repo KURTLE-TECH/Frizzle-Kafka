@@ -1,2 +1,2 @@
-sudo systemctl start producer
+sudo systemctl start registration
 sudo systemctl start nginx
