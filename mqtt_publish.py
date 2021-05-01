@@ -16,7 +16,7 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 #client connection and coms
-data = {"Device ID":"519eb77c-98ea-4b76-a017-5ff4abfe0e56","Temp":"23","Pressure":"0.9bar",'status':'working'}
+data = {"Device ID":"643f2987-07c1-44e2-b7a1-ac9dad148d27","Temp":"23","Pressure":"0.9bar",'Humidity':'78','Wind speed':"25","wind direction":"S",'status':'working'}
 client.connect(MQTT_server,1883)
 client.publish(MQTT_path,str(data))
 #  client.loop_forever()
