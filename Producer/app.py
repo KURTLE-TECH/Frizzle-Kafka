@@ -18,6 +18,7 @@ db_handler = db.DynamodbHandler()
 nodes_table = db_handler.db.Table("Nodes_Available")
 app = Flask(__name__)
 
+
 @app.route('/')
 def hello_world():
     if request.method == "GET":
@@ -33,7 +34,7 @@ def register_node():
             node_info = loads(request.data)
         except Exception as e:
             return jsonify({"parsing error ": str(e)})
-        #print(node_info)
+        # print(node_info)
         data = dict()
         date = datetime.now()
         tz = pytz.timezone('Asia/Kolkata')
@@ -43,34 +44,34 @@ def register_node():
         data['time'] = current_time.split()[1].rstrip('+5:30')
         if node_info["Device ID"] == "":
             device_id = str(uuid.uuid4())
-            #print(topic_name)
 
-            #creating table for the node
+            # creating table for the node
             status = db_handler.create_table_in_database(device_id)
             if status == "failed":
                 data['error'] = 'dynamo failed'
                 return jsonify(data)
 
-	        #add table to existing pool of device
+                # add table to existing pool of device
             try:
-            	row = {"Device ID":device_id,"lat":"","lng":""}
-            	with nodes_table.batch_writer() as writer:
-                	writer.put_item(Item=row)
+                row = {"Device ID": device_id, "lat": "", "lng": ""}
+                with nodes_table.batch_writer() as writer:
+                    writer.put_item(Item=row)
             except Exception as e:
-            	print("could not insert into existing nodes")
-                data['error'] = "could not update existing nodes' table"
-            	return jsonify(data)
+                print("could not insert into existing nodes")
+                data['error'] = "could not update existing nodes table"
+                return jsonify(data)
 
             data['id'] = device_id
             return jsonify(data)
-        else:        
+        else:
             try:
-            	row = {"Device ID":node_info["Device ID"],"lat":node_info["lat"],"lng":node_info["lng"]}
-            	with nodes_table.batch_writer() as writer:
-                	writer.put_item(Item=row)
+                row = {"Device ID": node_info["Device ID"],
+                       "lat": node_info["lat"], "lng": node_info["lng"]}
+                with nodes_table.batch_writer() as writer:
+                    writer.put_item(Item=row)
             except Exception as e:
-            	print("could not insert location of nodes")
-            	return jsonify(data)
+                print("could not insert location of nodes")
+                return jsonify(data)
             return jsonify(data)
 
     else:
