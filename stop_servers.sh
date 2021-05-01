@@ -1,2 +1,2 @@
-sudo systemctl stop producer
+sudo systemctl stop registration
 sudo systemctl stop nginx
