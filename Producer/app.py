@@ -4,50 +4,19 @@ from flask_assets import Bundle, Environment
 from datetime import datetime
 from json import dumps, loads
 from kafka import KafkaProducer
-from kafka import KafkaAdminClient
 from kafka.cluster import ClusterMetadata
 from kafka.admin import NewTopic
 from flask.json import jsonify
+from database import DynamodbHandler as db
 import pytz
 import uuid
 producer = KafkaProducer(bootstrap_servers=['13.126.242.56:9092'],
                          value_serializer=lambda x:
                          dumps(x).encode('utf-8'))
 
-kafka_admin_client = KafkaAdminClient(bootstrap_servers=['13.126.242.56:9092'])
-client = boto3.client('dynamodb')
-dynamo_resource = boto3.resource('dynamodb')
-nodes_table = dynamo_resource.Table("Nodes_Available")
+db_handler = db.DynamodbHandler()
+nodes_table = db_handler.db.Table("Nodes_Available")
 app = Flask(__name__)
-def create_table_in_database(client,topic_name):
-    try:
-        response = client.create_table(
-            AttributeDefinitions=[
-            {
-            'AttributeName': 'time-stamp',
-            'AttributeType': 'S'
-            },
-            ],
-        TableName=topic_name,
-        KeySchema=[
-            {
-                'AttributeName': 'time-stamp',
-                'KeyType': 'HASH'
-            },
-        ],
-        BillingMode='PAY_PER_REQUEST',
-        StreamSpecification={
-            'StreamEnabled': False,
-        },
-        SSESpecification={
-            'Enabled': True ,
-            'SSEType': 'KMS',
-            'KMSMasterKeyId': '57780289-75ee-4f41-bdf8-0d4f43291fae'
-        }
-        )
-        return response
-    except Exception as e:
-        print(e)
 
 @app.route('/')
 def hello_world():
@@ -64,53 +33,37 @@ def register_node():
             node_info = loads(request.data)
         except Exception as e:
             return jsonify({"parsing error ": str(e)})
-        print(node_info)
+        #print(node_info)
+        data = dict()
+        date = datetime.now()
+        tz = pytz.timezone('Asia/Kolkata')
+        current_time = str(date.astimezone(tz))
+        current_time = str(date.astimezone(tz))
+        data['date'] = current_time.split()[0]
+        data['time'] = current_time.split()[1].rstrip('+5:30')
         if node_info["Device ID"] == "":
-            data = dict()
-            date = datetime.now()
-            tz = pytz.timezone('Asia/Kolkata')
-            current_time = str(date.astimezone(tz))
-            data['date'] = current_time.split()[0]
-            data['time'] = current_time.split()[1].rstrip('+5:30')
-            print(date)
-            topic_name = str(uuid.uuid4())
-            print(topic_name)
-            # creating topics for the node
-            topics_list = list()
-            topics_list.append(
-                NewTopic(name=topic_name, num_partitions=1, replication_factor=3))
-            try:
-                kafka_admin_client.create_topics(new_topics=topics_list)
-                print("inside topic creation")
-            except Exception as e:
-                data['error'] = e
-                return jsonify(data)
+            device_id = str(uuid.uuid4())
+            #print(topic_name)
 
             #creating table for the node
-            status = create_table_in_database(client,topic_name)
+            status = db_handler.create_table_in_database(device_id)
             if status == "failed":
                 data['error'] = 'dynamo failed'
                 return jsonify(data)
 
 	        #add table to existing pool of device
             try:
-            	row = {"Device ID":topic_name,"lat":"","lng":""}
+            	row = {"Device ID":device_id,"lat":"","lng":""}
             	with nodes_table.batch_writer() as writer:
                 	writer.put_item(Item=row)
             except Exception as e:
             	print("could not insert into existing nodes")
+                data['error'] = "could not update existing nodes' table"
             	return jsonify(data)
 
-            data['id'] = topic_name
+            data['id'] = device_id
             return jsonify(data)
-        else:
-            data = dict()
-            date = datetime.now()
-            tz = pytz.timezone('Asia/Kolkata')
-            current_time = str(date.astimezone(tz))
-            current_time = str(date.astimezone(tz))
-            data['date'] = current_time.split()[0]
-            data['time'] = current_time.split()[1].rstrip('+5:30')
+        else:        
             try:
             	row = {"Device ID":node_info["Device ID"],"lat":node_info["lat"],"lng":node_info["lng"]}
             	with nodes_table.batch_writer() as writer:
