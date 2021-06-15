@@ -23,12 +23,12 @@ app = Flask(__name__)
 # app_logger.addHandler(handler)
 
 
-@app.route('/status/server/nodes', methods=["GET"])
+@app.route('/node/server/status', methods=["GET"])
 def status():
     return {"Server": "Node creation and registration", "Status": "Up"}
 
 
-@app.route("/create", methods=["GET"])
+@app.route("/node/create", methods=["GET"])
 def register_node():
     data = dict()
     data["Device ID"] = str(uuid.uuid4())
@@ -49,7 +49,7 @@ def register_node():
     return jsonify(data)
 
 
-@app.route("/register",methods=["POST"])
+@app.route("/node/register",methods=["POST"])
 def register():
     try:
         node_info = loads(request.data)
@@ -116,7 +116,7 @@ def register():
     # add table to existing pool of device
 
 
-@app.route("/initialise",methods=["GET"])
+@app.route("/node/initialise",methods=["POST"])
 def initialise():
     try:
         node_info = loads(request.data)
