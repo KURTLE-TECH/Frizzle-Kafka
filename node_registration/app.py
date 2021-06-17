@@ -10,13 +10,16 @@ import pytz
 import uuid
 import logging
 
+with open("config.json","r") as f:
+    config = loads(f.read())
+
 db_handler = db.DynamodbHandler()
-nodes_table = db_handler.db.Table("Nodes_Available")
+nodes_table = db_handler.db.Table(config['node_info'])
 app = Flask(__name__)
 
 # logging.basicConfig(filename='server_nodes.log', filemode="w", level=logging.DEBUG)
 # formatter = logging.Formatter("Level:%(levelname)s %(name)s : %(message)s")
-# handler = logging.FileHandler("requests_nodes.log", mode="w")
+# handler = logging.FileHandler("node_requests_server.log", mode="w")
 # handler.setFormatter(formatter)
 # app_logger = logging.getLogger("requests")
 # app_logger.setLevel(logging.INFO)
@@ -40,7 +43,7 @@ def register_node():
            "generation-time":{"S":current_time}}
     try:
         db_handler.client.put_item(
-            TableName="Nodes_Available",
+            TableName=config['node_info'],
             Item=row
         )
     except Exception as e:
@@ -61,7 +64,7 @@ def register():
         return {'status': "failed", "reason": 'empty device id'}
 
     response = db_handler.client.get_item(
-        TableName='Nodes_Available',
+        TableName=config['node_info'],
         Key={
             "Device ID": {
                 "S": node_info['Device ID']
@@ -96,7 +99,7 @@ def register():
             }
     try:
         table_insertion_status = db_handler.client.put_item(
-            TableName="Nodes_Available",
+            TableName=config['node_info'],
             Item=row
         )
         print("After updating registration to complete",table_insertion_status)
@@ -128,7 +131,7 @@ def initialise():
         return {'status': "failed", "reason": 'empty device id'}
 
     response = db_handler.client.get_item(
-        TableName='Nodes_Available',
+        TableName=config['node_info'],
         Key={
             "Device ID": {
                 "S": node_info['Device ID']
