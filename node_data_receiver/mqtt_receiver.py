@@ -22,17 +22,21 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
 		node_values = eval(msg.payload.decode('utf-8'))
 		logging.info("Received at: "+datetime.now().strftime("%Y-%m-%d_%H:%M:%S")+" Topic: "+str(msg.topic)+" Device ID: "+node_values["Device ID"])
-		if 'time-stamp' not in node_values.keys():
-			node_values['time-stamp'] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")		
-
-		#print(node_values)		
-		producer.produce(config['kafka_topics']['logs_node'],key=node_values['Device ID'], value=dumps(node_values['Logs']))				
-		del node_values["Logs"]
+		
+		node_values['time-stamp'] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")		
+		node_values["Logs"]['time-stamp'] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")		
 
 		#print(node_values)
-		producer.produce(config['kafka_topics']['data_node'],key=node_values['Device ID'], value=dumps(node_values))		
+		try:		
+			producer.produce(config['kafka_topics']['logs_node'],key=node_values['Device ID'], value=dumps(node_values['Logs']))				
+			logging.info("Sent to "+config['kafka_topics']['logs_node']+" at "+datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))
+			del node_values["Logs"]
 
-		logging.info("Sent to "+config['kafka_topics']['data_node']+" at "+datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))
+			#print(node_values)
+			producer.produce(config['kafka_topics']['data_node'],key=node_values['Device ID'], value=dumps(node_values))		
+			logging.info("Sent to "+config['kafka_topics']['data_node']+" at "+datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))
+		except Exception as e:
+			logging.error(f"Unable to send due to {str(e)} at "+datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))	
 
 logging.info("Started listening")
 client = mqtt.Client("frizzle_receiver")
