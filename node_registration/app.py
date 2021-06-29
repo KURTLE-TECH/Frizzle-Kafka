@@ -56,7 +56,7 @@ def register_node():
         )
         log_desc = "Generated {id} at {time}".format(id=data["Device ID"],time=datetime.now().strftime(format="%y-%m-%d_%H-%M-%S"))
         app.logger.info(log_desc)
-        qr_code.save(data["Device ID"]+datetime.now().strftime(format="%y-%m-%d_%H-%M-%S")+".png")
+        qr_code.save(data["Device ID"]+datetime.now().strftime(format=" %y-%m-%d_%H-%M-%S")+".png")
     except Exception as e:
         app.logger.error(get_log(logging.ERROR,request,str(e)))
         return {"status": "failed", "reason": str(e)}
