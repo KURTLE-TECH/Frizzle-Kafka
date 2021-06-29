@@ -9,7 +9,10 @@ from database import DynamodbHandler as db
 import pytz
 import uuid
 import logging
+from qrcode import make
+from get_data import get_log
 
+#load config
 with open("config.json","r") as f:
     config = loads(f.read())
 
@@ -17,52 +20,66 @@ db_handler = db.DynamodbHandler()
 nodes_table = db_handler.db.Table(config['node_info'])
 app = Flask(__name__)
 
-# logging.basicConfig(filename='server_nodes.log', filemode="w", level=logging.DEBUG)
-# formatter = logging.Formatter("Level:%(levelname)s %(name)s : %(message)s")
-# handler = logging.FileHandler("node_requests_server.log", mode="w")
-# handler.setFormatter(formatter)
-# app_logger = logging.getLogger("requests")
-# app_logger.setLevel(logging.INFO)
-# app_logger.addHandler(handler)
+logging.basicConfig(filename='node_server_requests.log', filemode="w", level=logging.INFO,format=config['log_format'])
+app.logger.setLevel(logging.INFO)
 
 
 @app.route('/node/server/status', methods=["GET"])
 def status():
+    #this route tells if the server is reachable or not    
+    app.logger.info(get_log(logging.INFO,request,None))
     return {"Server": "Node creation and registration", "Status": "Up"}
-
 
 @app.route("/node/create", methods=["GET"])
 def register_node():
+    curr_time = datetime.now().strftime(format="%y-%m-%d %H:%M:%S")
+    
+    #generating the new ID for the node
     data = dict()
     data["Device ID"] = str(uuid.uuid4())
+    
+    #generating QR code for the ID    
+    qr_code = make(data["Device ID"])
     date = datetime.now()
     tz = pytz.timezone('Asia/Kolkata')
     current_time = str(date.astimezone(tz))      
+
+    #inserting into DynamoDB
     row = {"Device ID": {"S": data["Device ID"]},
            "registration": {"S": "incomplete"},
            "generation-time":{"S":current_time}}
+    
     try:
         db_handler.client.put_item(
             TableName=config['node_info'],
             Item=row
         )
+        log_desc = "Generated {id} at {time}".format(id=data["Device ID"],time=datetime.now().strftime(format="%y-%m-%d_%H-%M-%S"))
+        app.logger.info(log_desc)
+        qr_code.save(data["Device ID"]+datetime.now().strftime(format="%y-%m-%d_%H-%M-%S")+".png")
     except Exception as e:
-        print(e)
+        app.logger.error(get_log(logging.ERROR,request,str(e)))
         return {"status": "failed", "reason": str(e)}
+    
+    app.logger.info(get_log(logging.INFO,request,None))
     return jsonify(data)
 
 
 @app.route("/node/register",methods=["POST"])
-def register():
+def register():    
+    
     try:
         node_info = loads(request.data)
     except Exception as e:
         # add logs here
+        app.logger.error(get_log(logging.ERROR,request,str(e)))
         return jsonify({"parsing error ": str(e)})
-    # print(node_info)
+    
     if node_info["Device ID"] == "":
+        app.logger.error(get_log(logging.ERROR,request,"Empty ID in request"))
         return {'status': "failed", "reason": 'empty device id'}
 
+    #checking if the node is registered or not
     response = db_handler.client.get_item(
         TableName=config['node_info'],
         Key={
@@ -72,10 +89,12 @@ def register():
         }
     )    
     try:
-        print("Checking if Id registered in DB",response['Item'])
+        # print("Checking if Id registered in DB",response['Item'])
         if response['Item'] == {}:
+            app.logger.error(get_log(logging.error,request,"ID not present in database"))
             return {"status": "failed", "reason": "id not present in ID database"}
     except Exception as e:
+        app.logger.error(get_log(logging.error,request,"ID not present in database"))
         return {"status": "failed", "reason": "id not present in ID database"}
     data = {}
     date = datetime.now()
@@ -88,6 +107,8 @@ def register():
         sensor_values_creation = db_handler.create_table_in_database(node_info['Device ID'])
         sensor_health_creation = db_handler.create_table_in_database(node_info['Device ID']+"_logs")
     except Exception as e:
+        log_desc = "{device} already present in database".format(device=node_info['Device ID'])
+        app.logger.error(get_log(logging.error,request,log_desc))        
         return {"status":'failed','reason':'node already registered; tables exist'}    
     
     row = {"Device ID": {"S":node_info["Device ID"]},
@@ -102,9 +123,11 @@ def register():
             TableName=config['node_info'],
             Item=row
         )
-        print("After updating registration to complete",table_insertion_status)
+        log_desc = "Registered device with id {device} at {time}".format(device=node_info['Device ID'],time = datetime.now().strftime(format="%y-%m-%d %H:%M:%S"))
+        app.logger.info(log_desc)
     except Exception as e:
-        print("could not insert location of nodes")
+        log_desc = "Could not register device with id {device}".format(device=node_info['Device ID'])
+        app.logger.error(log_desc)
         try:
             response = db_handler.client.delete_table(
                 TableName=node_info['Device ID']+"_logs"
@@ -124,10 +147,11 @@ def initialise():
     try:
         node_info = loads(request.data)
     except Exception as e:
-        # add logs here
+        app.logger.error(logging.ERROR,request,"unable to parse data")
         return jsonify({"parsing error ": str(e)})
     # print(node_info)
     if node_info["Device ID"] == "":
+        app.logger.error(logging.ERROR,request,"Empty device ID")
         return {'status': "failed", "reason": 'empty device id'}
 
     response = db_handler.client.get_item(
@@ -141,8 +165,12 @@ def initialise():
     
     try:
         if response['Item']['registration']["S"] != "complete":
+            log_desc = "{ID} not registered in database".format(ID=node_info["Device ID"])
+            app.logger.error(logging.ERROR,request,log_desc)
             return {"status": "failed", "reason": "id not registered in ID database"}
     except Exception:
+        log_desc = "{ID} not present in database".format(ID=node_info["Device ID"])
+        app.logger.error(logging.ERROR,request,log_desc)
         return {"status": "failed", "reason": "id not present in ID database"}
     data = {}
     date = datetime.now()
@@ -153,4 +181,5 @@ def initialise():
     return jsonify(data)
 
 if __name__ == "__main__":
+    app.logger.setLevel(logging.INFO)
     app.run(debug=True, port=5000)
