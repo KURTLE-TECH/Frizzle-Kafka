@@ -10,6 +10,7 @@ import pytz
 import uuid
 import logging
 from qrcode import make
+import io
 from get_data import get_log
 
 #load config
@@ -18,6 +19,8 @@ with open("config.json","r") as f:
 
 db_handler = db.DynamodbHandler()
 nodes_table = db_handler.db.Table(config['node_info'])
+s3_resource = boto3.resource('s3')
+qr_code_bucket = s3_resource.Bucket(config['qr_code_bucket'])
 app = Flask(__name__)
 
 logging.basicConfig(filename='node_server_requests.log', filemode="w", level=logging.INFO,format=config['log_format'])
@@ -56,12 +59,29 @@ def register_node():
         )
         log_desc = "Generated {id} at {time}".format(id=data["Device ID"],time=datetime.now().strftime(format="%y-%m-%d_%H-%M-%S"))
         app.logger.info(log_desc)
-        qr_code.save(data["Device ID"]+datetime.now().strftime(format=" %y-%m-%d_%H-%M-%S")+".png")
+        
     except Exception as e:
         app.logger.error(get_log(logging.ERROR,request,str(e)))
         return {"status": "failed", "reason": str(e)}
     
-    app.logger.info(get_log(logging.INFO,request,None))
+    #inserting the qr code into S3
+    try:
+        img = make(data['Device ID'])
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr,format="PNG")
+        img_byte_arr = img_byte_arr.getvalue()
+
+        qr_code_bucket.put_object(Body = img_byte_arr,
+        Key=data["Device ID"]+datetime.now().strftime(format=" %y-%m-%d_%H-%M-%S")+".png",
+        ServerSideEncryption='aws:kms',
+        SSEKMSKeyId =config['KMSKeyID'])
+        log_desc = "Put QR code with id: {id} at {time}".format(id=data["Device ID"],time=datetime.now().strftime(format="%y-%m-%d_%H-%M-%S"))
+        app.logger.info(log_desc)
+    
+    except Exception as e:
+        app.logger.error(get_log(logging.ERROR,request,str(e)))
+        return {"status": "failed", "reason": str(e)}
+    
     return jsonify(data)
 
 
