@@ -1,0 +1,6 @@
+{
+    "node_info": "Nodes_Available",
+    "log_format": "Level:%(levelname)s %(name)s : %(message)s",
+    "qr_code_bucket": "frizzle-qr-code-bucket",
+    "KMSKeyID": "57780289-75ee-4f41-bdf8-0d4f43291fae"
+}
