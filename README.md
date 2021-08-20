@@ -85,7 +85,14 @@ This is the flask server that contains various routes that are required while re
     "status": "failed"
     }
      ```
+2. register_node_server.ini
+This is the uWSGI configuration file that is used to run the uWSGI server that sits behind NGINX
 
+3. wsgi.py
+This is the wrapper for the app.py used for the uWSGI server
+
+4. database/
+This folder contains code used by the app.py for all operations related to the DynamoDB 
 
 ## Node data receiver
 The folder directory is as follows
