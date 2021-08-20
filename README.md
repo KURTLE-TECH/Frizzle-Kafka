@@ -110,3 +110,15 @@ This file contains the configuration required for the mqtt receiver to run and c
 3. mqtt_publish.py
 This file contains code that sends test data to the MQTT broker and is used for testing purposes
 
+## General files
+1. start_kafka_servers.sh 
+This is used to start the single node kafka cluster onto the machine i.e. the zookeeper service and the kafka broker service
+
+2. stop_kafka_servers.sh
+This is used to stop the single node kafka cluster
+
+3. start_servers.sh
+This is used to start the linux services required for the Node registration i.e. nginx service and the registration service
+
+4. stop_servers.sh
+This is used to stop the linux services
