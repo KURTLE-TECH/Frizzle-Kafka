@@ -37,7 +37,7 @@ def on_message(client, userdata, msg):
 			logging.info("Sent to "+config['kafka_topics']['data_node']+" at "+datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))
 		except Exception as e:
 			logging.error(f"Unable to send due to {str(e)} at "+datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))	
-
+		producer.poll(0)
 logging.info("Started listening")
 client = mqtt.Client("frizzle_receiver")
 client.on_connect = on_connect
