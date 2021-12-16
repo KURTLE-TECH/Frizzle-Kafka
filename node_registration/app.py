@@ -12,6 +12,7 @@ import logging
 from qrcode import make
 import io
 from get_data import get_log
+from timestream import create_table
 
 #load config
 with open("config.json","r") as f:
@@ -25,6 +26,7 @@ app = Flask(__name__)
 
 logging.basicConfig(filename='node_server_requests.log', filemode="w", level=logging.INFO,format=config['log_format'])
 app.logger.setLevel(logging.INFO)
+timestream_client = boto3.client('timestream-write',region_name='us-east-1')
 
 
 @app.route('/node/server/status', methods=["GET"])
@@ -158,6 +160,12 @@ def register():
         except Exception:
             pass
         return {"status": "failed", 'reason': 'error in updating registration'}
+    
+    
+    status = create_table(timestream_client,node_info['Device ID'])
+    if status is False:
+        return {"status": "failed", 'reason': 'error in updating registration'}
+        
     return {"status":"success","reason":"Node successfully registered"}
     # add table to existing pool of device
 
