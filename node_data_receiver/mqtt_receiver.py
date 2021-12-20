@@ -81,7 +81,7 @@ def on_message(client, userdata, msg):
 				{'Name': 'Device ID', 'Value': node_values["Device ID"]}, ]
 
 			current_time = str(int(round(time.time() * 1000)))     
-
+			node_values.pop("picture")
 			node_data_timestream = {
 				'Dimensions': dimensions,
 				'MeasureName': 'Node Data',
